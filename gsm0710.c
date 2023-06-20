@@ -51,6 +51,12 @@
 *  - fixed open_pty function to grant right for Unix98 scheme pseudo
 *    terminals even though symlinks are not in use
 *
+* Added descibtion for ulboxR5 channels
+* ------------------
+* set default baudrate to 115200
+* set default serial to serial0
+* set default symlink to /tmp/ttyGSM
+* wait_for_daemon_status = 1
 * New Usage:
 * gsmMuxd [options] <pty1> <pty2> ...
 *
@@ -528,7 +534,10 @@ char *createSymlinkName(int idx) {
         return NULL;
     }
     char* symLinkName  = malloc(strlen(devSymlinkPrefix)+255);
+    
+    
     sprintf(symLinkName, "%s%d", devSymlinkPrefix, idx);
+    printf("%s  ", symLinkName);
     return symLinkName;
 }
 
@@ -545,7 +554,12 @@ int open_pty(char* devname, int idx) {
 			if (symlink(ptsSlaveName, symLinkName) != 0) {
 				syslog(LOG_ERR,"Can't create symbolic link %s -> %s. %s (%d).\n", symLinkName, ptsSlaveName, strerror(errno), errno);
 			}
+			//printf("%s : ",ptsSlaveName);
+			
 		}
+		
+		
+		
 		// get the parameters
 		tcgetattr(fd, &options);
 		// set raw input
@@ -1088,7 +1102,7 @@ void parent_signal_treatment(int param) {
 }
 
 /**
- * Daemonize process, this process  create teh daemon
+ * Daemonize process, this process  create the daemon
  */
 int daemonize(int _debug)
 {
@@ -1117,7 +1131,7 @@ int daemonize(int _debug)
 
         // Close out the standard file descriptors
         close(STDIN_FILENO);
-        close(STDOUT_FILENO);
+        //close(STDOUT_FILENO);
         close(STDERR_FILENO);
 	}
 	//daemonize process stop here
@@ -1328,6 +1342,12 @@ int openDevicesAndMuxMode() {
 	syslog(LOG_INFO,"Open devices...\n");
 	// open ussp devices
 	maxfd = 0;
+	const char *uBloxR5_channels[3];
+	uBloxR5_channels[0] = "Command Channel";
+	uBloxR5_channels[1] = "Command Channel";
+	uBloxR5_channels[2] = "GNSS Tunneling";
+	
+
 	for (i = 0; i < numOfPorts; i++)
 	{
 		remaining[i] = 0;
@@ -1336,11 +1356,14 @@ int openDevicesAndMuxMode() {
 			syslog(LOG_ERR,"Can't open %s. %s (%d).\n", ptydev[i], strerror(errno), errno);
 			return -1;
 		}
+		
 		else if (ussp_fd[i] > maxfd)
 			maxfd = ussp_fd[i];
+		printf(" %s \n",uBloxR5_channels[i]);
 		cstatus[i].opened = 0;
 		cstatus[i].v24_signals = S_DV | S_RTR | S_RTC | EA;
 	}
+	
 	cstatus[i].opened = 0;
 	syslog(LOG_INFO,"Open serial port...\n");
 
@@ -1429,19 +1452,21 @@ int main(int argc, char *argv[], char *env[])
 	int pingNumber = 1;
 	time_t frameReceiveTime;
 	time_t currentTime;
-
+	
 
 	programName = argv[0];
 	/*************************************/
-	if(argc<2)
+	/*if(argc<2)
 	{
 		usage(programName);
 		exit(-1);
-	}
+	}*/
 	_modem_type = GENERIC;
 
-	serportdev="/dev/modem";
-
+	serportdev="/dev/serial0";
+	baudrate=115200;
+	devSymlinkPrefix="/tmp/ttyGSM";
+	wait_for_daemon_status = 1;
 	while((opt=getopt(argc,argv,"p:f:h?dwrm:b:P:s:"))>0)
 	{
 		switch(opt)
@@ -1495,6 +1520,8 @@ int main(int argc, char *argv[], char *env[])
 	//SHOW TIME
 	parent_pid = getpid();
 	daemonize(_debug);
+
+
 	//The Hell is from now-one
 
     /* SIGNALS treatment*/
@@ -1519,14 +1546,27 @@ int main(int argc, char *argv[], char *env[])
 
 
 
-	for(t=optind;t<argc;t++)
+	/*for(t=optind;t<argc;t++)
 	{
 		if((t-optind)>=MAX_CHANNELS) break;
 		syslog(LOG_INFO, "Port %d : %s\n",t-optind,argv[t]);
 		ptydev[t-optind]=argv[t];
 	}
+	
+		
 	//exit(0);
-	numOfPorts = t-optind;
+	numOfPorts = t-optind;*/
+	
+	        for(t=0;t<3;t++)
+        {
+                //if((t-optind)>=MAX_CHANNELS) break;
+                syslog(LOG_INFO, "Port %d : %s\n",t-optind,argv[t]);
+                ptydev[t]="/dev/ptmx";
+        }
+
+
+        numOfPorts = 3;//t-optind;
+	
 
 	syslog(LOG_INFO,"Malloc buffers...\n");
 	// allocate memory for data structures
