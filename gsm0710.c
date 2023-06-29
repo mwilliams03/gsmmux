@@ -50,15 +50,15 @@
 *  - buffer.c to use syslog instead of PDEBUG
 *  - fixed open_pty function to grant right for Unix98 scheme pseudo
 *    terminals even though symlinks are not in use
-*
-* Added descibtion for ulboxR5 channels
-* ------------------
-* set default baudrate to 115200
-* set default serial to serial0
-* set default symlink to /tmp/ttyGSM
-* wait_for_daemon_status = 1
+* 
+* Modified June 32023 Mark Williams mark@ozzmaker.com>
+* - Added description  for uBlox SARA-R5 channels
+* - set default baudrate to 115200
+* - set default serial to serial0
+* - set default symlink to /tmp/ttyGSM
+* - wait_for_daemon_status = 1
 * New Usage:
-* gsmMuxd [options] <pty1> <pty2> ...
+* gsmMuxd [options] 
 *
 * To see the options, type:
 * ./gsmMuxd -h
@@ -204,7 +204,7 @@ int ussp_connected(int port)
 * RETURNS:
 * number of characters written
 */
-int write_frame(int channel, const char *input, int count, unsigned char type)
+int write_frame(int channel, const unsigned char *input, int count, unsigned char type)
 {
 	// flag, EA=1 C channel, frame type, length 1-2
 	unsigned char prefix[5] = { F_FLAG, EA | CR, 0, 0, 0 };
@@ -438,7 +438,7 @@ int ussp_send_data(unsigned char *buf, int n, int port)
 
 // Returns 1 if found, 0 otherwise. needle must be null-terminated.
 // strstr might not work because WebBox sends garbage before the first OK
-int findInBuf(char* buf, int len, char* needle) {
+int findInBuf(unsigned char* buf, int len, char* needle) {
   int i;
   int needleMatchedPos=0;
 
@@ -477,12 +477,13 @@ int at_command(int fd, char *cmd, int to)
 	unsigned char buf[1024];
 	int sel, len, i;
 	int returnCode = 0;
-	int wrote = 0;
+	//int wrote = 0;
 
 	if(_debug)
 		syslog(LOG_DEBUG, "is in %s\n", __FUNCTION__);
 
-	wrote = write(fd, cmd, strlen(cmd));
+	//wrote =
+	 write(fd, cmd, strlen(cmd));
 
 	if(_debug)
 		syslog(LOG_DEBUG, "Wrote  %s \n", cmd);
@@ -954,7 +955,7 @@ void usage(char *_name)
 int extract_frames(GSM0710_Buffer * buf)
 {
 	// version test for Siemens terminals to enable version 2 functions
-	static char version_test[] = "\x23\x21\x04TEMUXVERSION2\0\0";
+	static unsigned char version_test[] = "\x23\x21\x04TEMUXVERSION2\0\0";
 	int framesExtracted = 0;
 
 	GSM0710_Frame *frame;
@@ -1436,7 +1437,7 @@ void closeDevices()
 int main(int argc, char *argv[], char *env[])
 {
 #define PING_TEST_LEN 6
-	static char ping_test[] = "\x23\x09PING";
+	//static char ping_test[] = "\x23\x09PING";
 	//struct sigaction sa;
 	int sel, len;
 	fd_set rfds;
@@ -1535,12 +1536,12 @@ int main(int argc, char *argv[], char *env[])
 	programName = argv[0];
 	if(_debug)
 	{
-		openlog(programName, LOG_NDELAY | LOG_PID | LOG_PERROR  , LOG_LOCAL0);//pode ir at� 7
+		openlog(programName, LOG_NDELAY | LOG_PID | LOG_PERROR  , LOG_LOCAL0);
 		_priority = LOG_DEBUG;
 	}
 	else
 	{
-		openlog(programName, LOG_NDELAY | LOG_PID , LOG_LOCAL0 );//pode ir at� 7
+		openlog(programName, LOG_NDELAY | LOG_PID , LOG_LOCAL0 );
 		_priority = LOG_INFO;
 	}
 
@@ -1719,7 +1720,7 @@ int main(int argc, char *argv[], char *env[])
 				if (_debug) {
 					syslog(LOG_DEBUG,"Sending PING to the modem.\n");
 				}
-				write_frame(0, ping_test, PING_TEST_LEN, UIH);
+				//write_frame(0, ping_test, PING_TEST_LEN, UIH);
 				++pingNumber;
 			}
 		}
