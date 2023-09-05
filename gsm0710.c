@@ -55,7 +55,7 @@
 * - Added description  for uBlox SARA-R5 channels
 * - set default baudrate to 115200
 * - set default serial to serial0
-* - set default symlink to /tmp/ttyGSM
+* - set default symlink to /dev/ttyGSM
 * - wait_for_daemon_status = 1
 * New Usage:
 * gsmMuxd [options] 
@@ -1466,7 +1466,7 @@ int main(int argc, char *argv[], char *env[])
 
 	serportdev="/dev/serial0";
 	baudrate=115200;
-	devSymlinkPrefix="/tmp/ttyGSM";
+	devSymlinkPrefix="/dev/ttyGSM";
 	wait_for_daemon_status = 1;
 	while((opt=getopt(argc,argv,"p:f:h?dwrm:b:P:s:"))>0)
 	{
